@@ -1,0 +1,17 @@
+version: 2
+updates:
+  # Mantiene las dependencias de npm (package.json) actualizadas
+  - package-ecosystem: "npm"
+    # Directorio donde se encuentra el package.json
+    directory: "/"
+    # Frecuencia con la que se buscan actualizaciones
+    schedule:
+      interval: "weekly"
+    # Opcional: Agrupar todas las actualizaciones menores y de parches en un solo PR
+    groups:
+      npm-dependencies:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"

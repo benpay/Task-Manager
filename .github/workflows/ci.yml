@@ -1,0 +1,31 @@
+name: CI Básico (Build & Lint)
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-and-lint:
+    name: Comprobar Errores y Compilación
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Descargando el código
+      uses: actions/checkout@v4
+
+    - name: Configurando Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20 # Puedes cambiar esto a la versión de Node que uses
+        cache: 'npm' # Hace que las instalaciones sean más rápidas guardando la caché
+
+    - name: Instalando Dependencias
+      run: npm ci || npm install
+
+    - name: Comprobando tipos (Lint - TypeScript)
+      run: npm run lint
+
+    - name: Comprobando que el proyecto compila (Build)
+      run: npm run build

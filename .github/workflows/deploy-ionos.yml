@@ -1,0 +1,42 @@
+name: Despliegue Automático en IONOS 🚀
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  build-and-deploy:
+    name: 🚀 Build y Despliegue por FTP
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 🚚 Obtener el código
+      uses: actions/checkout@v4
+
+    - name: 📦 Instalar Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'npm'
+
+    - name: 🔨 Instalar y Compilar (Build)
+      run: |
+        npm ci || npm install
+        npm run build
+
+    - name: 📂 Sincronizar a IONOS por FTP
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+        # Debes configurar estos "Secrets" en tu respositorio de GitHub
+        # Settings > Secrets and variables > Actions > New repository secret
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        
+        # La carpeta que se ha generado tras el build y que queremos subir
+        local-dir: ./dist/
+        
+        # Opcional: Ruta en el servidor IONOS si no es la carpeta principal
+        # server-dir: /tu-sitio-web/

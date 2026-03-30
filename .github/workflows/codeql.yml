@@ -1,0 +1,42 @@
+name: "CodeQL Analysis"
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    # Si usas PRs para fusionar con main, se analizará cada pull request
+    branches: [ "main", "master" ]
+  schedule:
+    # Además, se ejecuta una vez por semana automáticamente
+    - cron: '0 12 * * 1'
+
+jobs:
+  analyze:
+    name: Análisis de Seguridad
+    runs-on: ubuntu-latest
+    
+    # Permisos necesarios para que CodeQL suba el reporte a GitHub
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # CodeQL clasifica JS, JSX, TS, TSX bajo el paraguas de 'javascript-typescript'
+        language: [ 'javascript-typescript' ]
+
+    steps:
+    - name: Descargando el código (Checkout)
+      uses: actions/checkout@v4
+
+    - name: Inicializando CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+
+    - name: Realizando Análisis CodeQL
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:${{matrix.language}}"

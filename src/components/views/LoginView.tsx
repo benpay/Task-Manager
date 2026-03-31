@@ -8,7 +8,7 @@ import { motion } from 'motion/react';
 import { Lock, User, ArrowRight, ShieldCheck, Sparkles } from 'lucide-react';
 
 interface LoginViewProps {
-  onLogin: (username: string, password: string) => void;
+  onLogin: (username: string, password: string) => Promise<void> | void;
   error?: string | null;
 }
 
@@ -17,14 +17,18 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, error }) => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate a bit of delay for premium feel
-    setTimeout(() => {
-      onLogin(username, password);
+    // Add artificial delay for premium feel and wait for login request
+    try {
+      await new Promise(resolve => setTimeout(resolve, 800));
+      await onLogin(username, password);
+    } catch (err) {
+      console.error("Error en submit:", err);
+    } finally {
       setIsLoading(false);
-    }, 800);
+    }
   };
 
   return (

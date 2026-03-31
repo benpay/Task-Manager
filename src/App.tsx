@@ -54,11 +54,19 @@ export default function App() {
         return;
       }
 
-      const response = await fetch('/login.php', {
+      const API_BASE_URL = ((import.meta as any).env.VITE_API_URL || '').replace(/\/$/, '');
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos de límite
+
+      const response = await fetch(`${API_BASE_URL}/login.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username, password }),
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`Error HTTP: ${response.status} ${response.statusText}`);

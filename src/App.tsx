@@ -55,11 +55,12 @@ export default function App() {
       }
 
       const API_BASE_URL = ((import.meta as any).env.VITE_API_URL || '').replace(/\/$/, '');
+      const fetchUrl = API_BASE_URL ? `${API_BASE_URL}/login.php` : 'login.php';
       
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos de límite
 
-      const response = await fetch(`${API_BASE_URL}/login.php`, {
+      const response = await fetch(fetchUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),

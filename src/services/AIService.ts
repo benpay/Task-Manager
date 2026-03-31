@@ -5,11 +5,16 @@
 
 import { GoogleGenAI } from "@google/genai";
 
-const API_KEY = (import.meta as any).env.VITE_GEMINI_API_KEY;
-const genAI = new GoogleGenAI({ apiKey: API_KEY });
+const API_KEY = (import.meta as any).env.VITE_GEMINI_API_KEY || "";
+const genAI = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
 
 export async function generateTaskDescription(title: string): Promise<string> {
   try {
+    if (!genAI) {
+      console.warn("AI no configurada (Falta API Key).");
+      return "No se pudo generar la descripción en este momento.";
+    }
+
     const prompt = `Como experto en productividad y bricolaje, escribe una descripción breve (máximo 2 frases) para una tarea llamada "${title}". La descripción debe ser motivadora y clara. Escribe solo el texto de la descripción.`;
 
     const result = await genAI.models.generateContent({
@@ -26,6 +31,8 @@ export async function generateTaskDescription(title: string): Promise<string> {
 
 export async function getAIImageKeywords(title: string): Promise<string> {
   try {
+    if (!genAI) return title;
+
     const prompt = `Dame exactamente 3 palabras clave en inglés separadas por comas que describan visualmente una imagen profesional para la tarea: "${title}". No añadas nada más.`;
 
     const result = await genAI.models.generateContent({
@@ -43,6 +50,8 @@ export async function getAIImageKeywords(title: string): Promise<string> {
 
 export async function generateImageBase64(prompt: string): Promise<string | null> {
   try {
+    if (!genAI) return null;
+
     const result = await genAI.models.generateImages({
       model: 'imagen-4.0-fast-generate-001',
       prompt: prompt,

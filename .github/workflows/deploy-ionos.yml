@@ -26,17 +26,13 @@ jobs:
         npm ci || npm install
         npm run build
 
-    - name: 📂 Sincronizar a IONOS por FTP
-      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+    - name: 📂 Sincronizar a IONOS por SFTP
+      uses: appleboy/scp-action@v0.1.7
       with:
-        # Debes configurar estos "Secrets" en tu respositorio de GitHub
-        # Settings > Secrets and variables > Actions > New repository secret
-        server: ${{ secrets.FTP_SERVER }}
-        username: ${{ secrets.FTP_USERNAME }}
-        password: ${{ secrets.FTP_PASSWORD }}
-        
-        # La carpeta que se ha generado tras el build y que queremos subir
-        local-dir: ./dist/
-        
-        # Opcional: Ruta en el servidor IONOS si no es la carpeta principal
-        # server-dir: /tu-sitio-web/
+        host: ${{ secrets.SFTP_SERVER }}
+        username: ${{ secrets.SFTP_USERNAME }}
+        password: ${{ secrets.SFTP_PASSWORD }}
+        port: 22
+        source: "dist/"
+        target: "/taskmanager"
+        strip_components: 1

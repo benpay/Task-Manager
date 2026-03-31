@@ -60,7 +60,18 @@ export default function App() {
         body: JSON.stringify({ username, password })
       });
 
-      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status} ${response.statusText}`);
+      }
+
+      const responseText = await response.text();
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error("No es válido JSON:", responseText);
+        throw new Error(`Respuesta no válida del servidor. Recibe HTML o ruta incorrecta.`);
+      }
 
       if (data.success) {
         setIsAuthenticated(true);
@@ -71,7 +82,8 @@ export default function App() {
       }
     } catch (err) {
       console.error('Login error:', err);
-      setLoginError('Error de conexión con el servidor');
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      setLoginError(`Error de sistema o red: ${errorMessage}`);
     }
   };
 

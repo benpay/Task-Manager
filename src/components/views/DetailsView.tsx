@@ -25,7 +25,8 @@ import {
   CheckCircle, 
   RotateCcw,
   Sparkles,
-  Loader2
+  Loader2,
+  Link
 } from 'lucide-react';
 import { Task } from '../../types/task';
 import { PriorityBadge } from '../tasks/PriorityBadge';
@@ -44,6 +45,15 @@ interface DetailsViewProps {
   toggleTaskStatus: (taskId: number) => void;
 }
 
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+    reader.readAsDataURL(file);
+  });
+};
+
 export const DetailsView: React.FC<DetailsViewProps> = ({ 
   task, 
   onBack,
@@ -58,6 +68,35 @@ export const DetailsView: React.FC<DetailsViewProps> = ({
   const [isEditingSteps, setIsEditingSteps] = useState(false);
   const [editingSteps, setEditingSteps] = useState<{ title: string; description: string }[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [newResourceUrl, setNewResourceUrl] = useState('');
+
+  const handleAddResource = () => {
+    if (!newResourceUrl.trim()) return;
+    
+    let title = 'Tutorial';
+    try {
+      const urlObj = new URL(newResourceUrl);
+      if (urlObj.hostname.includes('youtube.com') || urlObj.hostname.includes('youtu.be')) {
+        title = 'Video de YouTube';
+      } else if (urlObj.hostname.includes('pinterest.com')) {
+        title = 'Pinterest';
+      } else {
+        title = urlObj.hostname.replace('www.', '');
+      }
+    } catch (e) {
+      // fallback
+    }
+
+    const currentResources = task.resources || [];
+    const newResource = {
+      title,
+      type: 'video' as const,
+      url: newResourceUrl.trim()
+    };
+    
+    updateTaskField(task.id, 'resources', [...currentResources, newResource]);
+    setNewResourceUrl('');
+  };
 
   const isCompleted = task.status === 'hecho';
   const isDIY = task.type === 'DIY';
@@ -195,20 +234,95 @@ export const DetailsView: React.FC<DetailsViewProps> = ({
                 <div className="pt-8 border-t border-slate-50 dark:border-slate-700">
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">Guía paso a paso</h3>
-                    <button onClick={() => setIsEditingSteps(!isEditingSteps)} className="text-primary font-black text-[10px] uppercase tracking-widest hover:underline">Editar Pasos</button>
+                    {!isEditingSteps ? (
+                      <button 
+                        onClick={() => {
+                          setEditingSteps(task.steps ? task.steps.map(s => ({ ...s })) : []);
+                          setIsEditingSteps(true);
+                        }} 
+                        className="text-primary font-black text-[10px] uppercase tracking-widest hover:underline"
+                      >
+                        Editar Pasos
+                      </button>
+                    ) : (
+                      <div className="flex gap-4">
+                        <button 
+                          onClick={handleSaveSteps} 
+                          className="text-emerald-500 font-black text-[10px] uppercase tracking-widest hover:underline flex items-center gap-1"
+                        >
+                          <Save className="w-3.5 h-3.5" /> Guardar
+                        </button>
+                        <button 
+                          onClick={() => setIsEditingSteps(false)} 
+                          className="text-slate-400 font-black text-[10px] uppercase tracking-widest hover:underline flex items-center gap-1"
+                        >
+                          <X className="w-3.5 h-3.5" /> Cancelar
+                        </button>
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-6">
-                    {task.steps.map((step, idx) => (
-                      <div key={idx} className="flex gap-6 group">
-                        <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 flex items-center justify-center text-primary font-black group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
-                          {idx + 1}
+                    {isEditingSteps ? (
+                      <>
+                        {editingSteps.map((step, idx) => (
+                          <div key={idx} className="flex gap-4 items-start bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white text-xs shrink-0 font-black mt-1">
+                              {idx + 1}
+                            </div>
+                            <div className="flex-1 space-y-2">
+                              <input 
+                                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm py-2 px-3 outline-none focus:ring-1 focus:ring-primary dark:text-white font-bold"
+                                placeholder="Título del paso..."
+                                value={step.title}
+                                onChange={(e) => {
+                                  const steps = [...editingSteps];
+                                  steps[idx].title = e.target.value;
+                                  setEditingSteps(steps);
+                                }}
+                              />
+                              <textarea 
+                                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm py-2 px-3 outline-none focus:ring-1 focus:ring-primary dark:text-white resize-none"
+                                placeholder="Descripción (opcional)..."
+                                value={step.description}
+                                rows={2}
+                                onChange={(e) => {
+                                  const steps = [...editingSteps];
+                                  steps[idx].description = e.target.value;
+                                  setEditingSteps(steps);
+                                }}
+                              />
+                            </div>
+                            <button 
+                              onClick={() => {
+                                const steps = editingSteps.filter((_, i) => i !== idx);
+                                setEditingSteps(steps);
+                              }}
+                              className="text-red-500 hover:text-red-600 p-2 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl transition-all mt-1"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                        <button 
+                          onClick={() => setEditingSteps([...editingSteps, { title: '', description: '' }])}
+                          className="w-full py-3 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl text-slate-400 text-sm font-black uppercase tracking-widest hover:text-primary hover:border-primary hover:bg-slate-50 dark:hover:bg-slate-900/30 transition-all flex items-center justify-center gap-2"
+                        >
+                          <Plus className="w-4 h-4" /> Añadir Paso
+                        </button>
+                      </>
+                    ) : (
+                      task.steps.map((step, idx) => (
+                        <div key={idx} className="flex gap-6 group">
+                          <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 flex items-center justify-center text-primary font-black group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
+                            {idx + 1}
+                          </div>
+                          <div>
+                            <h4 className="font-black text-slate-900 dark:text-white">{step.title}</h4>
+                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">{step.description}</p>
+                          </div>
                         </div>
-                        <div>
-                          <h4 className="font-black text-slate-900 dark:text-white">{step.title}</h4>
-                          <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">{step.description}</p>
-                        </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </div>
               )}
@@ -284,26 +398,105 @@ export const DetailsView: React.FC<DetailsViewProps> = ({
           </section>
 
           {/* Resources */}
-          {task.resources && task.resources.length > 0 && (
+          {isDIY && (
             <section className="space-y-4">
               <h3 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em] px-2">Recursos y Tutoriales</h3>
               <div className="space-y-3">
-                {task.resources.map((res, idx) => (
-                  <a key={idx} href={res.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-5 bg-white dark:bg-slate-800 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-lg transition-all group">
-                    <div className="size-10 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-red-500 group-hover:scale-110 transition-transform">
-                      <Play className="w-5 h-5 fill-red-500" />
+                {task.resources && task.resources.length > 0 ? (
+                  task.resources.map((res, idx) => (
+                    <div key={idx} className="relative group">
+                      <a href={res.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-5 bg-white dark:bg-slate-800 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-lg transition-all pr-12 group-hover:border-primary/20">
+                        <div className="size-10 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-red-500 group-hover:scale-110 transition-transform">
+                          <Play className="w-5 h-5 fill-red-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-black dark:text-white truncate font-bold">{res.title}</p>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">{res.url}</p>
+                        </div>
+                      </a>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          const updated = (task.resources || []).filter((_, i) => i !== idx);
+                          updateTaskField(task.id, 'resources', updated);
+                        }}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-slate-50 dark:bg-slate-900 hover:bg-red-50 dark:hover:bg-red-950/20 text-slate-400 hover:text-red-500 rounded-xl transition-all border border-slate-100 dark:border-slate-800 opacity-0 group-hover:opacity-100"
+                        title="Eliminar recurso"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-black dark:text-white truncate">{res.title}</p>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest truncate">{res.url}</p>
-                    </div>
-                  </a>
-                ))}
+                  ))
+                ) : (
+                  <div className="bg-white dark:bg-slate-800 rounded-[2rem] p-6 text-center border border-slate-100 dark:border-slate-800 shadow-sm">
+                    <p className="text-xs font-semibold text-slate-400">No hay tutoriales o enlaces agregados.</p>
+                  </div>
+                )}
+
+                {/* Agregar nuevo recurso */}
+                <div className="flex gap-2 pt-2">
+                  <div className="relative flex-1">
+                    <Link className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input 
+                      className="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-950 dark:text-white pl-11 pr-4 py-3 text-xs focus:ring-1 focus:ring-primary outline-none shadow-sm font-medium"
+                      placeholder="Pegar enlace de YouTube, Pinterest..."
+                      value={newResourceUrl}
+                      onChange={(e) => setNewResourceUrl(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleAddResource();
+                        }
+                      }}
+                    />
+                  </div>
+                  <button 
+                    onClick={handleAddResource}
+                    className="bg-primary hover:bg-primary/95 text-white px-4 rounded-2xl flex items-center justify-center shadow-md active:scale-95 transition-all"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </section>
           )}
         </div>
       </div>
+      <input 
+        id="banner-upload"
+        type="file"
+        className="hidden"
+        accept="image/*"
+        onChange={async (e) => {
+          const file = e.target.files?.[0];
+          if (file) {
+            try {
+              const base64 = await fileToBase64(file);
+              updateBannerImage(task.id, base64);
+            } catch (err) {
+              console.error("Error reading file:", err);
+            }
+          }
+        }}
+      />
+      <input 
+        id="gallery-upload"
+        type="file"
+        className="hidden"
+        accept="image/*,video/*"
+        onChange={async (e) => {
+          const file = e.target.files?.[0];
+          if (file) {
+            try {
+              const base64 = await fileToBase64(file);
+              const type = file.type.startsWith('video') ? 'video' : 'image';
+              addToGallery(task.id, { type, url: base64 });
+            } catch (err) {
+              console.error("Error reading file:", err);
+            }
+          }
+        }}
+      />
     </motion.div>
   );
 };

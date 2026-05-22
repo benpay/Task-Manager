@@ -25,6 +25,15 @@ interface CreateViewProps {
   onCreateTask: (task: Partial<Task>) => void;
 }
 
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+    reader.readAsDataURL(file);
+  });
+};
+
 export const CreateView: React.FC<CreateViewProps> = ({ onBack, onCreateTask }) => {
   const [newTask, setNewTask] = useState<Partial<Task>>({
     type: 'Tareas',
@@ -283,15 +292,19 @@ export const CreateView: React.FC<CreateViewProps> = ({ onBack, onCreateTask }) 
                       type="file"
                       className="hidden"
                       accept="image/*,video/*"
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (file) {
-                          const url = URL.createObjectURL(file);
-                          const type = file.type.startsWith('video') ? 'video' : 'image';
-                          setNewTask({
-                            ...newTask,
-                            gallery: [...(newTask.gallery || []), { type, url }]
-                          });
+                          try {
+                            const base64 = await fileToBase64(file);
+                            const type = file.type.startsWith('video') ? 'video' : 'image';
+                            setNewTask({
+                              ...newTask,
+                              gallery: [...(newTask.gallery || []), { type, url: base64 }]
+                            });
+                          } catch (err) {
+                            console.error("Error reading file:", err);
+                          }
                         }
                       }}
                     />

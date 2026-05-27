@@ -80,6 +80,13 @@ try {
         $stmt->execute([$id, $data]);
         echo json_encode(['success' => true]);
     }
+    elseif ($action === 'delete_material') {
+        if (!$input || !isset($input['id'])) throw new Exception('Invalid material id');
+        $id = $input['id'];
+        $stmt = $pdo->prepare("DELETE FROM store_materials WHERE id = ?");
+        $stmt->execute([$id]);
+        echo json_encode(['success' => true]);
+    }
     else {
         echo json_encode(['success' => false, 'error' => 'Unknown action: ' . $action]);
     }

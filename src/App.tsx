@@ -35,6 +35,7 @@ export default function App() {
     updateTaskField,
     saveSteps,
     createTask,
+    createMaterial,
     updateMaterialQuantity
   } = useTasks();
 
@@ -162,8 +163,10 @@ export default function App() {
               {view === 'materials' && (
                 <MaterialsView 
                   key="materials"
+                  tasks={tasks}
                   materials={materials}
                   onBack={() => setView('list')}
+                  onCreateMaterial={createMaterial}
                   updateMaterialQuantity={updateMaterialQuantity}
                 />
               )}

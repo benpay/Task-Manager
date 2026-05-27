@@ -139,6 +139,31 @@ export function useTasks() {
     await dbService.saveTask(taskToAdd);
   };
 
+  const createMaterial = async (newMaterial: Omit<Material, 'id'>, associatedTaskId?: number) => {
+    const id = Date.now();
+    const materialToAdd: Material = {
+      id,
+      ...newMaterial
+    };
+    const updatedMaterials = [...materials, materialToAdd];
+    setMaterials(updatedMaterials);
+    await dbService.saveMaterial(materialToAdd);
+
+    if (associatedTaskId) {
+      const taskToUpdate = tasks.find(t => t.id === associatedTaskId);
+      if (taskToUpdate) {
+        const materialText = `${newMaterial.need} ${newMaterial.shortUnit} - ${newMaterial.name}`;
+        const updatedTask = {
+          ...taskToUpdate,
+          materials: [...(taskToUpdate.materials || []), { name: materialText, checked: false }]
+        };
+        const updatedTasks = tasks.map(t => t.id === associatedTaskId ? updatedTask : t);
+        setTasks(updatedTasks);
+        await dbService.saveTask(updatedTask);
+      }
+    }
+  };
+
   const updateMaterialQuantity = async (materialId: number, delta: number) => {
     const updatedMaterials = materials.map(m => 
       m.id === materialId ? { ...m, have: Math.max(0, m.have + delta) } : m
@@ -160,6 +185,7 @@ export function useTasks() {
     updateTaskField,
     saveSteps,
     createTask,
+    createMaterial,
     updateMaterialQuantity
   };
 }

@@ -174,6 +174,23 @@ export class DatabaseService {
     });
   }
 
+  async deleteMaterial(id: number): Promise<void> {
+    if (!this.isDev) {
+      await this.apiRequest('delete_material', { id });
+      return;
+    }
+
+    await this.init();
+    return new Promise((resolve, reject) => {
+      const transaction = this.db!.transaction(['materials'], 'readwrite');
+      const store = transaction.objectStore('materials');
+      const request = store.delete(id);
+
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject('Error deleting material');
+    });
+  }
+
   async saveAllMaterials(materials: Material[]): Promise<void> {
     if (!this.isDev) {
       for (const material of materials) {

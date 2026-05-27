@@ -34,4 +34,6 @@ export interface Material {
   shortUnit: string;
   location: string;
   image: string;
+  price?: number;
+  buyStatus?: 'para comprar' | 'aplazado' | 'no comprar';
 }

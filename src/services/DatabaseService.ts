@@ -50,7 +50,7 @@ export class DatabaseService {
 
   // --- Remote Backend Helpers ---
   private async apiRequest(action: string, payload?: any): Promise<any> {
-    const url = `/api.php?action=${action}`;
+    const url = `./api.php?action=${action}`;
     const options: RequestInit = {
       method: payload ? 'POST' : 'GET',
       headers: { 'Content-Type': 'application/json' },

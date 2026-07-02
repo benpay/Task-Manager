@@ -36,7 +36,10 @@ export default function App() {
     saveSteps,
     createTask,
     createMaterial,
-    updateMaterialQuantity
+    updateMaterialQuantity,
+    addTaskMaterial,
+    removeTaskMaterial,
+    deleteTask
   } = useTasks();
 
   useNotifications(tasks);
@@ -141,6 +144,10 @@ export default function App() {
                   addToGallery={addToGallery}
                   saveSteps={saveSteps}
                   toggleTaskStatus={toggleTaskStatus}
+                  addTaskMaterial={addTaskMaterial}
+                  removeTaskMaterial={removeTaskMaterial}
+                  deleteTask={deleteTask}
+                  materials={materials}
                 />
               )}
 
@@ -175,6 +182,7 @@ export default function App() {
                 <CreateView 
                   key="create"
                   onBack={() => setView('list')}
+                  materials={materials}
                   onCreateTask={(task) => {
                     createTask(task);
                     setView('list');

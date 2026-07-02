@@ -18,11 +18,12 @@ import {
   Camera, 
   Link as LinkIcon 
 } from 'lucide-react';
-import { Task } from '../../types/task';
+import { Task, Material } from '../../types/task';
 
 interface CreateViewProps {
   onBack: () => void;
   onCreateTask: (task: Partial<Task>) => void;
+  materials: Material[];
 }
 
 const fileToBase64 = (file: File): Promise<string> => {
@@ -34,7 +35,7 @@ const fileToBase64 = (file: File): Promise<string> => {
   });
 };
 
-export const CreateView: React.FC<CreateViewProps> = ({ onBack, onCreateTask }) => {
+export const CreateView: React.FC<CreateViewProps> = ({ onBack, onCreateTask, materials }) => {
   const [newTask, setNewTask] = useState<Partial<Task>>({
     type: 'Tareas',
     priority: 'media',
@@ -170,62 +171,68 @@ export const CreateView: React.FC<CreateViewProps> = ({ onBack, onCreateTask }) 
               </div>
             </div>
 
-            {newTask.type === 'DIY' && (
-              <>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center px-1">
-                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Materiales Requeridos</span>
-                    <div className="flex items-center gap-2">
-                      <input 
-                        type="number" 
-                        className="w-12 h-8 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-center focus:ring-primary outline-none dark:text-white"
-                        value={newMaterial.quantity}
-                        onChange={(e) => setNewMaterial({ ...newMaterial, quantity: parseInt(e.target.value) || 1 })}
-                      />
-                      <div className="relative flex items-center">
-                        <input 
-                          type="text"
-                          className="h-8 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs px-2 pr-8 focus:ring-primary outline-none dark:text-white"
-                          placeholder="Nuevo material..."
-                          value={newMaterial.name}
-                          onChange={(e) => setNewMaterial({ ...newMaterial, name: e.target.value })}
-                        />
-                        <button 
-                          onClick={() => {
-                            if (newMaterial.name) {
-                              setNewTask({
-                                ...newTask,
-                                materials: [...(newTask.materials || []), { name: `${newMaterial.quantity}x ${newMaterial.name}`, checked: false }]
-                              });
-                              setNewMaterial({ name: '', quantity: 1 });
-                            }
-                          }}
-                          className="absolute right-1 text-primary p-0.5"
-                        >
-                          <AddCircleIcon className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {newTask.materials?.map((m, idx) => (
-                      <div key={idx} className="flex items-center gap-2 bg-slate-200 dark:bg-slate-800 px-3 py-1.5 rounded-full text-sm font-medium dark:text-white">
-                        <span className="text-primary font-bold">{m.name.split(' ')[0]}</span>
-                        {m.name.split(' ').slice(1).join(' ')}
-                        <button 
-                          onClick={() => setNewTask({
+            <div className="space-y-3">
+              <div className="flex justify-between items-center px-1">
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Materiales Requeridos</span>
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="number" 
+                    className="w-12 h-8 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-center focus:ring-primary outline-none dark:text-white"
+                    value={newMaterial.quantity}
+                    onChange={(e) => setNewMaterial({ ...newMaterial, quantity: parseInt(e.target.value) || 1 })}
+                  />
+                  <div className="relative flex items-center">
+                    <input 
+                      type="text"
+                      list="global-materials-list"
+                      className="h-8 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs px-2 pr-8 focus:ring-primary outline-none dark:text-white"
+                      placeholder="Nuevo material..."
+                      value={newMaterial.name}
+                      onChange={(e) => setNewMaterial({ ...newMaterial, name: e.target.value })}
+                    />
+                    <button 
+                      onClick={() => {
+                        if (newMaterial.name) {
+                          setNewTask({
                             ...newTask,
-                            materials: newTask.materials?.filter((_, i) => i !== idx)
-                          })}
-                          className="hover:text-red-500"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))}
+                            materials: [...(newTask.materials || []), { name: `${newMaterial.quantity}x ${newMaterial.name}`, checked: false }]
+                          });
+                          setNewMaterial({ name: '', quantity: 1 });
+                        }
+                      }}
+                      className="absolute right-1 text-primary p-0.5"
+                    >
+                      <AddCircleIcon className="w-5 h-5" />
+                    </button>
                   </div>
                 </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {newTask.materials?.map((m, idx) => (
+                  <div key={idx} className="flex items-center gap-2 bg-slate-200 dark:bg-slate-800 px-3 py-1.5 rounded-full text-sm font-medium dark:text-white">
+                    <span className="text-primary font-bold">{m.name.split(' ')[0]}</span>
+                    {m.name.split(' ').slice(1).join(' ')}
+                    <button 
+                      onClick={() => setNewTask({
+                        ...newTask,
+                        materials: newTask.materials?.filter((_, i) => i !== idx)
+                      })}
+                      className="hover:text-red-500"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <datalist id="global-materials-list">
+                {materials.map(m => (
+                  <option key={m.id} value={m.name} />
+                ))}
+              </datalist>
+            </div>
 
+            {newTask.type === 'DIY' && (
+              <>
                 <div className="space-y-3">
                   <span className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider ml-1">Pasos a seguir</span>
                   <div className="space-y-3">

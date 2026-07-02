@@ -45,6 +45,39 @@ export const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
   const [associatedTaskId, setAssociatedTaskId] = useState<string>('');
   const [errors, setErrors] = useState<{ name?: string }>({});
 
+  const parseVerbalMaterial = (text: string) => {
+    const cleanName = text.trim().replace(',', '.');
+
+    // Check for verbal match, e.g., "2 sacos de cemento", "3 botes de pintura"
+    const verbalMatch = cleanName.match(/^([\d.]+)\s+([a-zA-ZáéíóúÁÉÍÓÚñÑ]+)\s+(?:de\s+)?(.+)$/i);
+    if (verbalMatch) {
+      const quantity = parseFloat(verbalMatch[1]) || 1;
+      const parsedUnit = verbalMatch[2].trim();
+      const unit = parsedUnit.charAt(0).toUpperCase() + parsedUnit.slice(1);
+      const shortUnit = parsedUnit.toLowerCase();
+      const name = verbalMatch[3].trim();
+      return { quantity, name, unit, shortUnit };
+    }
+
+    // Check for simple verbal match, e.g., "2 cemento"
+    const simpleMatch = cleanName.match(/^([\d.]+)\s+(.+)$/i);
+    if (simpleMatch) {
+      const quantity = parseFloat(simpleMatch[1]) || 1;
+      const name = simpleMatch[2].trim();
+      const unit = unitType === 'unidades' ? 'Unidades' : 'Metros';
+      const shortUnit = unitType === 'unidades' ? 'uds' : 'm';
+      return { quantity, name, unit, shortUnit };
+    }
+
+    // Fallback: use manual inputs
+    return {
+      quantity: Number(need) || 0,
+      name: cleanName,
+      unit: unitType === 'unidades' ? 'Unidades' : 'Metros',
+      shortUnit: unitType === 'unidades' ? 'uds' : 'm'
+    };
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
@@ -52,14 +85,16 @@ export const AddMaterialModal: React.FC<AddMaterialModalProps> = ({
       return;
     }
 
+    const parsed = parseVerbalMaterial(name);
+
     onCreate({
-      name: name.trim(),
+      name: parsed.name,
       description: description.trim() || 'Sin descripción',
       category: 'Ferretería', // default category
       have: 0, // default availability
-      need: Number(need) || 0,
-      unit: unitType === 'unidades' ? 'Unidades' : 'Metros',
-      shortUnit: unitType === 'unidades' ? 'uds' : 'm',
+      need: parsed.quantity,
+      unit: parsed.unit,
+      shortUnit: parsed.shortUnit,
       location: 'Taller', // default location
       image: image || 'https://images.unsplash.com/photo-1530018607912-eff2df114f11?w=150' // elegant wood/material placeholder
     }, associatedTaskId ? Number(associatedTaskId) : undefined);

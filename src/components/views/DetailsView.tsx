@@ -28,7 +28,7 @@ import {
   Loader2,
   Link
 } from 'lucide-react';
-import { Task } from '../../types/task';
+import { Task, Material } from '../../types/task';
 import { PriorityBadge } from '../tasks/PriorityBadge';
 import { LinearProgressBar } from '../tasks/ProgressBar';
 import { getAIImageKeywords, generateTaskDescription, generateImageBase64 } from '../../services/AIService';
@@ -43,6 +43,10 @@ interface DetailsViewProps {
   addToGallery: (taskId: number, item: { type: 'image' | 'video'; url: string }) => void;
   saveSteps: (taskId: number, steps: { title: string; description: string }[]) => void;
   toggleTaskStatus: (taskId: number) => void;
+  addTaskMaterial: (taskId: number, name: string, quantity: number, unit: string) => void;
+  removeTaskMaterial: (taskId: number, name: string) => void;
+  deleteTask: (taskId: number) => void;
+  materials: Material[];
 }
 
 const fileToBase64 = (file: File): Promise<string> => {
@@ -63,12 +67,27 @@ export const DetailsView: React.FC<DetailsViewProps> = ({
   updateBannerImage,
   addToGallery,
   saveSteps,
-  toggleTaskStatus
+  toggleTaskStatus,
+  addTaskMaterial,
+  removeTaskMaterial,
+  deleteTask,
+  materials
 }) => {
   const [isEditingSteps, setIsEditingSteps] = useState(false);
   const [editingSteps, setEditingSteps] = useState<{ title: string; description: string }[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [newResourceUrl, setNewResourceUrl] = useState('');
+
+  const [newMatName, setNewMatName] = useState('');
+  const [newMatQty, setNewMatQty] = useState(1);
+  const [newMatUnit, setNewMatUnit] = useState('uds');
+
+  const handleAddMaterial = () => {
+    if (!newMatName.trim()) return;
+    addTaskMaterial(task.id, newMatName.trim(), newMatQty, newMatUnit);
+    setNewMatName('');
+    setNewMatQty(1);
+  };
 
   const handleAddResource = () => {
     if (!newResourceUrl.trim()) return;
@@ -164,7 +183,16 @@ export const DetailsView: React.FC<DetailsViewProps> = ({
         </div>
         
         <div className="flex items-center gap-3">
-          <button className="p-3 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 text-slate-400 hover:text-red-500 transition-all">
+          <button 
+            onClick={() => {
+              if (window.confirm('¿Estás seguro de que deseas eliminar esta tarea?')) {
+                deleteTask(task.id);
+                onBack();
+              }
+            }}
+            className="p-3 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 text-slate-400 hover:text-red-500 transition-all"
+            title="Eliminar tarea"
+          >
             <Trash2 className="w-6 h-6" />
           </button>
           <button 
@@ -382,16 +410,73 @@ export const DetailsView: React.FC<DetailsViewProps> = ({
                </div>
              </div>
 
-             {isDIY && task.materials && (
+             {task.materials && (
                <div>
                  <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 px-1">Inventario Necesario</h4>
                  <div className="space-y-3">
                     {task.materials.map((m, idx) => (
-                      <label key={idx} className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-transparent hover:border-primary/20 transition-all cursor-pointer group">
-                        <input type="checkbox" checked={m.checked} onChange={() => toggleMaterial(task.id, m.name)} className="size-5 rounded-lg border-slate-200 text-primary focus:ring-primary" />
-                        <span className={`text-sm font-bold transition-all ${m.checked ? 'text-slate-300 line-through' : 'text-slate-700 dark:text-slate-300 group-hover:text-primary'}`}>{m.name}</span>
-                      </label>
+                      <div key={idx} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-transparent hover:border-primary/20 transition-all group">
+                        <label className="flex items-center gap-3 cursor-pointer flex-1">
+                          <input type="checkbox" checked={m.checked} onChange={() => toggleMaterial(task.id, m.name)} className="size-5 rounded-lg border-slate-200 text-primary focus:ring-primary" />
+                          <span className={`text-sm font-bold transition-all ${m.checked ? 'text-slate-300 line-through' : 'text-slate-700 dark:text-slate-300 group-hover:text-primary'}`}>{m.name}</span>
+                        </label>
+                        <button 
+                          onClick={() => removeTaskMaterial(task.id, m.name)}
+                          className="text-slate-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 p-1"
+                          title="Eliminar material"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
                     ))}
+                 </div>
+
+                 {/* Form to add new material to task */}
+                 <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 space-y-3">
+                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Añadir material requerido</p>
+                   <div className="flex gap-2">
+                     <input 
+                       type="number" 
+                       min="1"
+                       className="w-16 h-10 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-center focus:ring-1 focus:ring-primary outline-none dark:text-white font-bold"
+                       value={newMatQty}
+                       onChange={(e) => setNewMatQty(parseInt(e.target.value) || 1)}
+                     />
+                     <select 
+                       className="w-16 h-10 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-center focus:ring-1 focus:ring-primary outline-none dark:text-white font-bold"
+                       value={newMatUnit}
+                       onChange={(e) => setNewMatUnit(e.target.value)}
+                     >
+                       <option value="uds">uds</option>
+                       <option value="m">m</option>
+                     </select>
+                     <div className="relative flex-1">
+                       <input 
+                         type="text"
+                         list="details-materials-list"
+                         className="w-full h-10 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs px-3 focus:ring-1 focus:ring-primary outline-none dark:text-white font-bold"
+                         placeholder="Ej. Saco de cemento"
+                         value={newMatName}
+                         onChange={(e) => setNewMatName(e.target.value)}
+                         onKeyDown={(e) => {
+                           if (e.key === 'Enter') {
+                             handleAddMaterial();
+                           }
+                         }}
+                       />
+                     </div>
+                     <button 
+                       onClick={handleAddMaterial}
+                       className="bg-primary hover:bg-primary/95 text-white size-10 rounded-xl flex items-center justify-center shadow-md active:scale-95 transition-all"
+                     >
+                       <Plus className="w-5 h-5" />
+                     </button>
+                   </div>
+                   <datalist id="details-materials-list">
+                     {materials.map(m => (
+                       <option key={m.id} value={m.name} />
+                     ))}
+                   </datalist>
                  </div>
                </div>
              )}

@@ -8,6 +8,7 @@ import { AnimatePresence } from 'motion/react';
 import { useTasks } from './hooks/useTasks';
 import { useNotifications } from './hooks/useNotifications';
 import { BottomNav } from './components/common/BottomNav';
+import { config } from './config';
 import { ListView } from './components/views/ListView';
 import { DetailsView } from './components/views/DetailsView';
 import { CalendarView } from './components/views/CalendarView';
@@ -49,7 +50,7 @@ export default function App() {
     try {
       // Mock login for local development since Vite cannot execute PHP
       if ((import.meta as any).env.DEV) {
-        if (username === 'benpay' && password === 'Traducete1!') {
+        if (username === config.devCredentials.username && password === config.devCredentials.password) {
           setIsAuthenticated(true);
           localStorage.setItem('auth_token', 'dev_token_123');
         } else {

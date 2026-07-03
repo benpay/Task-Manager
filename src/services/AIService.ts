@@ -4,6 +4,7 @@
  */
 
 import { GoogleGenAI } from "@google/genai";
+import { config } from "../config";
 
 const API_KEY = (import.meta as any).env.VITE_GEMINI_API_KEY || "";
 const genAI = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
@@ -18,7 +19,7 @@ export async function generateTaskDescription(title: string): Promise<string> {
     const prompt = `Como experto en productividad y bricolaje, escribe una descripción breve (máximo 2 frases) para una tarea llamada "${title}". La descripción debe ser motivadora y clara. Escribe solo el texto de la descripción.`;
 
     const result = await genAI.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: config.ai.textModel,
       contents: [{ role: 'user', parts: [{ text: prompt }] }]
     });
 
@@ -36,7 +37,7 @@ export async function getAIImageKeywords(title: string): Promise<string> {
     const prompt = `Dame exactamente 3 palabras clave en inglés separadas por comas que describan visualmente una imagen profesional para la tarea: "${title}". No añadas nada más.`;
 
     const result = await genAI.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: config.ai.textModel,
       contents: [{ role: 'user', parts: [{ text: prompt }] }]
     });
 
@@ -53,7 +54,7 @@ export async function generateImageBase64(prompt: string): Promise<string | null
     if (!genAI) return null;
 
     const result = await genAI.models.generateImages({
-      model: 'imagen-4.0-fast-generate-001',
+      model: config.ai.imageModel,
       prompt: prompt,
       config: {
         numberOfImages: 1,

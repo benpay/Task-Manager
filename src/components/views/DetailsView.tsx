@@ -36,7 +36,7 @@ import { getAIImageKeywords, generateTaskDescription, generateImageBase64 } from
 interface DetailsViewProps {
   task: Task;
   onBack: () => void;
-  updateTaskField: (taskId: number, field: keyof Task, value: any) => void;
+  updateTaskField: (taskId: number, field: keyof Task | Partial<Task>, value?: any) => void;
   updateTaskProgress: (taskId: number, progress: number) => void;
   toggleMaterial: (taskId: number, materialName: string) => void;
   updateBannerImage: (taskId: number, imageUrl: string) => void;
@@ -474,12 +474,11 @@ export const DetailsView: React.FC<DetailsViewProps> = ({
                      >
                        Cancelar
                      </button>
-                     <button 
-                       onClick={() => {
-                         updateTaskField(task.id, 'dueDate', tempDueDate);
-                         updateTaskField(task.id, 'dueTime', tempDueTime);
-                         setIsEditingDate(false);
-                       }}
+                      <button 
+                        onClick={() => {
+                          updateTaskField(task.id, { dueDate: tempDueDate, dueTime: tempDueTime });
+                          setIsEditingDate(false);
+                        }}
                        className="px-3 py-1.5 rounded-xl bg-primary hover:bg-primary/90 text-[10px] font-black uppercase tracking-wider text-white transition-all shadow-md shadow-primary/20"
                      >
                        Guardar

@@ -14,6 +14,7 @@ import {
   Settings,
   User
 } from 'lucide-react';
+import { config } from '../../config';
 
 interface SidebarProps {
   view: string;
@@ -30,11 +31,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ view, setView }) => {
 
   return (
     <aside className="hidden md:flex flex-col w-72 h-screen sticky top-0 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border-r border-slate-200 dark:border-slate-800 p-8 z-20">
-      <div className="flex items-center gap-3 mb-12 px-2">
+      <div className="flex items-center gap-3 mb-2 px-2">
         <div className="bg-primary p-1.5 rounded-lg shadow-lg shadow-primary/20">
           <CheckCircle className="text-white w-6 h-6" />
         </div>
-        <h1 className="text-xl font-black tracking-tighter dark:text-white uppercase">Taskly</h1>
+        <h1 className="text-xl font-black tracking-tighter dark:text-white uppercase">{config.appName}</h1>
+      </div>
+      <div className="text-[10px] text-slate-400 dark:text-slate-500 font-bold px-2 mb-8 tracking-[0.2em] uppercase">
+        v{config.version}
       </div>
 
       <button 
@@ -72,11 +76,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ view, setView }) => {
         </button>
         <div className="p-2 mt-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl flex items-center gap-3 border border-slate-100 dark:border-slate-700">
           <div className="size-10 rounded-xl bg-gradient-to-tr from-primary to-blue-400 flex items-center justify-center text-white font-bold shadow-sm">
-            BP
+            {config.branding.userInitials}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-black dark:text-white truncate">Benpay User</p>
-            <p className="text-[10px] text-slate-500 font-medium">Plan Premium</p>
+            <p className="text-xs font-black dark:text-white truncate">{config.branding.userName}</p>
+            <p className="text-[10px] text-slate-500 font-medium">{config.branding.planName}</p>
           </div>
         </div>
       </div>

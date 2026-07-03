@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Lock, User, ArrowRight, ShieldCheck, Sparkles } from 'lucide-react';
+import { config } from '../../config';
 
 interface LoginViewProps {
   onLogin: (username: string, password: string) => Promise<void> | void;
@@ -122,7 +123,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, error }) => {
         
         {/* Subtle Brand Logo */}
         <div className="mt-8 text-center">
-          <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em]">Taskly OS v2.0</p>
+          <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em]">{config.appName} OS v{config.version}</p>
         </div>
       </motion.div>
     </div>

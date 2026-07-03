@@ -4,9 +4,10 @@
  */
 
 import { Task, Material } from '../types/task';
+import { config } from '../config';
 
-const DB_NAME = 'TasklyDB';
-const DB_VERSION = 1;
+const DB_NAME = config.database.name;
+const DB_VERSION = config.database.version;
 
 export class DatabaseService {
   private db: IDBDatabase | null = null;

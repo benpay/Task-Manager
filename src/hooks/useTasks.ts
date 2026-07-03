@@ -187,10 +187,17 @@ export function useTasks() {
     if (affectedTask) await dbService.saveTask(affectedTask);
   };
 
-  const updateTaskField = async (taskId: number, field: keyof Task, value: any) => {
-    const updatedTasks = tasks.map(task => 
-      task.id === taskId ? { ...task, [field]: value } : task
-    );
+  const updateTaskField = async (taskId: number, fieldOrUpdates: keyof Task | Partial<Task>, value?: any) => {
+    const updatedTasks = tasks.map(task => {
+      if (task.id === taskId) {
+        if (typeof fieldOrUpdates === 'object' && fieldOrUpdates !== null) {
+          return { ...task, ...fieldOrUpdates };
+        } else {
+          return { ...task, [fieldOrUpdates as keyof Task]: value };
+        }
+      }
+      return task;
+    });
     setTasks(updatedTasks);
     const affectedTask = updatedTasks.find(t => t.id === taskId);
     if (affectedTask) await dbService.saveTask(affectedTask);

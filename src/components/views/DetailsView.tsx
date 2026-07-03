@@ -78,6 +78,10 @@ export const DetailsView: React.FC<DetailsViewProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [newResourceUrl, setNewResourceUrl] = useState('');
 
+  const [isEditingDate, setIsEditingDate] = useState(false);
+  const [tempDueDate, setTempDueDate] = useState('');
+  const [tempDueTime, setTempDueTime] = useState('');
+
   const [newMatName, setNewMatName] = useState('');
   const [newMatQty, setNewMatQty] = useState(1);
   const [newMatUnit, setNewMatUnit] = useState('uds');
@@ -399,15 +403,90 @@ export const DetailsView: React.FC<DetailsViewProps> = ({
 
              <div>
                <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 px-1">Fecha de Entrega</h4>
-               <div className="bg-slate-50 dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-700 flex items-center gap-4">
-                 <div className="size-12 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-primary shadow-sm">
-                   <Calendar className="w-6 h-6" />
+               {!isEditingDate ? (
+                 <div 
+                   onClick={() => {
+                     setTempDueDate(task.dueDate || '');
+                     setTempDueTime(task.dueTime || '');
+                     setIsEditingDate(true);
+                   }}
+                   className="bg-slate-50 dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-700 flex items-center gap-4 cursor-pointer hover:border-primary/30 dark:hover:border-primary/30 hover:bg-slate-100/50 dark:hover:bg-slate-900/80 transition-all group animate-fade-in"
+                   title="Haga clic para editar la fecha y hora"
+                 >
+                   <div className="size-12 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-primary shadow-sm group-hover:scale-105 transition-all">
+                     <Calendar className="w-6 h-6" />
+                   </div>
+                   <div>
+                     <p className="text-sm font-black dark:text-white leading-tight">{task.dueDate || "Sin fecha"}</p>
+                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{task.dueTime || "Todo el día"}</p>
+                   </div>
                  </div>
-                 <div>
-                   <p className="text-sm font-black dark:text-white leading-tight">{task.dueDate || "Sin fecha"}</p>
-                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{task.dueTime || "Todo el día"}</p>
+               ) : (
+                 <div className="bg-slate-50 dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-700 flex flex-col gap-4">
+                   <div className="flex items-center gap-4">
+                     <div className="size-12 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center text-primary shadow-sm shrink-0">
+                       <Calendar className="w-6 h-6" />
+                     </div>
+                     <div className="flex-1 space-y-2">
+                       <input 
+                         type="date"
+                         className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs py-2 px-3 outline-none focus:ring-1 focus:ring-primary dark:text-white font-bold"
+                         value={tempDueDate}
+                         onChange={(e) => setTempDueDate(e.target.value)}
+                       />
+                       <input 
+                         type="time"
+                         className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs py-2 px-3 outline-none focus:ring-1 focus:ring-primary dark:text-white font-bold"
+                         value={
+                           tempDueTime 
+                             ? (() => {
+                                 const match = tempDueTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+                                 if (match) {
+                                   let [_, h, m, ampm] = match;
+                                   let hour = parseInt(h);
+                                   if (ampm.toUpperCase() === 'PM' && hour < 12) hour += 12;
+                                   if (ampm.toUpperCase() === 'AM' && hour === 12) hour = 0;
+                                   return `${String(hour).padStart(2, '0')}:${m}`;
+                                 }
+                                 return '';
+                               })()
+                             : ''
+                         }
+                         onChange={(e) => {
+                           const val = e.target.value;
+                           if (!val) {
+                             setTempDueTime('');
+                             return;
+                           }
+                           const [h, m] = val.split(':');
+                           const hour = parseInt(h);
+                           const ampm = hour >= 12 ? 'PM' : 'AM';
+                           const h12 = hour % 12 || 12;
+                           setTempDueTime(`${String(h12).padStart(2, '0')}:${m} ${ampm}`);
+                         }}
+                       />
+                     </div>
+                   </div>
+                   <div className="flex justify-end gap-2">
+                     <button 
+                       onClick={() => setIsEditingDate(false)}
+                       className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 transition-all"
+                     >
+                       Cancelar
+                     </button>
+                     <button 
+                       onClick={() => {
+                         updateTaskField(task.id, 'dueDate', tempDueDate);
+                         updateTaskField(task.id, 'dueTime', tempDueTime);
+                         setIsEditingDate(false);
+                       }}
+                       className="px-3 py-1.5 rounded-xl bg-primary hover:bg-primary/90 text-[10px] font-black uppercase tracking-wider text-white transition-all shadow-md shadow-primary/20"
+                     >
+                       Guardar
+                     </button>
+                   </div>
                  </div>
-               </div>
+               )}
              </div>
 
              {task.materials && (
